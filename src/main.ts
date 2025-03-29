@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Handler, Context } from 'aws-lambda';
 import { CartService } from './cart/services/cart.service';
+import 'reflect-metadata';
 
 let appContext;
 

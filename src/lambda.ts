@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import { configure as serverlessExpress } from '@vendia/serverless-express';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
+import 'reflect-metadata';
 
 let cachedServer: Handler;
 
