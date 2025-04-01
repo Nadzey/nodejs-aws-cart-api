@@ -18,7 +18,7 @@ import { CartService } from './services';
 import { CartItem } from './models';
 import { CreateOrderDto, PutCartPayload } from 'src/order/type';
 
-@Controller('api/profile/cart')
+@Controller('profile/cart')
 export class CartController {
   constructor(
     private cartService: CartService,

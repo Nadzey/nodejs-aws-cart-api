@@ -9,7 +9,7 @@ import { JWT_CONFIG } from '../constants';
 import { UsersModule } from '../users/users.module';
 
 const { secret, expiresIn } = JWT_CONFIG;
-
+console.log('[DEBUG] UserModule imported:', UsersModule);
 @Module({
   imports: [
     UsersModule,

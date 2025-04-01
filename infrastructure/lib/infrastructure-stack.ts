@@ -10,9 +10,23 @@ export class InfrastructureStack extends cdk.Stack {
   constructor(scope: cdk.App, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    // Load DB environment variables
+    const dbEnv = {
+      DB_HOST: process.env.DB_HOST || '',
+      DB_PORT: process.env.DB_PORT || '5432',
+      DB_USERNAME: process.env.DB_USERNAME || '',
+      DB_PASSWORD: process.env.DB_PASSWORD || '',
+      DB_NAME: process.env.DB_NAME || '',
+    };
+
+    // Optional: validate all required DB vars are present
+    if (!dbEnv.DB_HOST || !dbEnv.DB_USERNAME || !dbEnv.DB_PASSWORD || !dbEnv.DB_NAME) {
+      throw new Error('Missing one or more DB environment variables!');
+    }
+
     // VPC setup
     const vpc = new ec2.Vpc(this, 'NestJsVPC', {
-      maxAzs: 2, // Maximum availability zones
+      maxAzs: 2,
       subnetConfiguration: [
         {
           cidrMask: 24,
@@ -25,78 +39,77 @@ export class InfrastructureStack extends cdk.Stack {
           subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
         },
       ],
-      natGateways: 1, // One NAT Gateway for private subnets
+      natGateways: 1,
     });
 
-    // Security group for Lambda function
+    // Security group for Lambda
     const lambdaSG = new ec2.SecurityGroup(this, 'LambdaSG', {
       vpc,
       description: 'Security group for Lambda function',
       allowAllOutbound: true,
     });
 
-    // Lambda function definition using Node.js
+    // Lambda function
     const handler = new NodejsFunction(this, 'NestJsLambda', {
       functionName: 'cartLambda',
-      runtime: lambda.Runtime.NODEJS_18_X, // Node.js runtime for Lambda
-      handler: 'handler', // Name of the exported handler function in your entry file
-      entry: path.join(__dirname, '../../src/lambda.ts'), // Path to Lambda entry file
-      depsLockFilePath: path.join(__dirname, '../../package-lock.json'), // Package lock file for dependencies
-      timeout: cdk.Duration.seconds(30), // Timeout for the Lambda function
+      runtime: lambda.Runtime.NODEJS_20_X,
+      handler: 'handler',
+      entry: path.join(__dirname, '../../src/lambda.ts'),
+      depsLockFilePath: path.join(__dirname, '../../package-lock.json'),
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 512,
       environment: {
-        NODE_ENV: 'production', // Set environment variable for the Lambda function
+        NODE_ENV: 'production',
+        ...dbEnv,
       },
-      // reservedConcurrentExecutions: 1, // Reserved concurrency (adjust as needed)
       bundling: {
         minify: true,
         sourceMap: true,
-        target: 'node18', // Bundling target for Node.js 18
+        target: 'node20',
         nodeModules: [
           '@nestjs/core',
           '@nestjs/common',
           '@nestjs/platform-express',
           'reflect-metadata',
           '@vendia/serverless-express',
-        ], // External node modules for bundling
-        externalModules: ['@aws-sdk/*', 'aws-sdk'], // Exclude these modules from bundling
+        ],
+        externalModules: ['@aws-sdk/*', 'aws-sdk'],
       },
-      vpc, // Attach Lambda to VPC
+      vpc,
       vpcSubnets: {
-        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS, // Private subnet for Lambda
+        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
       },
-      securityGroups: [lambdaSG], // Attach security group
-      memorySize: 512, // Memory size for the Lambda function
+      securityGroups: [lambdaSG],
     });
 
-    // API Gateway setup to expose Lambda function as HTTP endpoint
+    // API Gateway setup
     const api = new apigateway.RestApi(this, 'CartServiceApi', {
-      restApiName: 'CartService', // Set the API name to CartService
+      restApiName: 'CartService',
       description: 'This is the CartService API',
       defaultCorsPreflightOptions: {
-        allowOrigins: apigateway.Cors.ALL_ORIGINS, // CORS settings
+        allowOrigins: apigateway.Cors.ALL_ORIGINS,
         allowMethods: apigateway.Cors.ALL_METHODS,
       },
       deployOptions: {
-        throttlingRateLimit: 1, // Throttling rate limit for API Gateway
-        throttlingBurstLimit: 1, // Throttling burst limit for API Gateway
+        throttlingRateLimit: 1,
+        throttlingBurstLimit: 1,
       },
     });
 
-    // Create Lambda integration for API Gateway
+    // Lambda integration
     const integration = new apigateway.LambdaIntegration(handler, {
-      proxy: true, // Use the proxy integration to forward requests
+      proxy: true,
     });
 
-    // Add proxy route to API Gateway
     api.root.addProxy({
-      defaultIntegration: integration, // Use the Lambda integration
-      anyMethod: true, // Allow any HTTP method
+      defaultIntegration: integration,
+      anyMethod: true,
     });
 
-    // Output API URL for easy access
+    // Output API URL
     new cdk.CfnOutput(this, 'ApiUrl', {
       value: api.url,
-      description: 'API Gateway URL', // Description of the output
+      description: 'API Gateway URL',
     });
   }
 }

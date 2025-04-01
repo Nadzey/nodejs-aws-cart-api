@@ -8,12 +8,14 @@ import { ConfigModule } from '@nestjs/config';
 import { Cart } from './cart/cart.entity';
 import { CartItem } from './cart/cart-item.entity';
 import { Product } from './products/product.entity';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
     AuthModule, 
     CartModule, 
     OrderModule, 
+    UsersModule,
 
     ConfigModule.forRoot(), 
     
@@ -27,8 +29,10 @@ import { Product } from './products/product.entity';
       entities: [Cart, CartItem, Product],
       synchronize: false,
       logging: true, 
-      ssl: true,
-    }),
+      ssl: {
+        rejectUnauthorized: false,
+      },   
+     }),
   ],
   controllers: [AppController],
   providers: [],

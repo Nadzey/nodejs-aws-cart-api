@@ -11,11 +11,19 @@ import {
 import {
   LocalAuthGuard,
   AuthService,
-  // JwtAuthGuard,
   BasicAuthGuard,
 } from './auth';
-import { User } from './users';
 import { AppRequest } from './shared';
+import { IsEmail, IsString, MinLength } from 'class-validator';
+
+class RegisterDto {
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  @MinLength(4)
+  password: string;
+}
 
 @Controller()
 export class AppController {
@@ -29,24 +37,22 @@ export class AppController {
     };
   }
 
-  @Post('api/auth/register')
+  @Post('auth/register')
   @HttpCode(HttpStatus.CREATED)
-  // TODO ADD validation
-  register(@Body() body: User) {
+  register(@Body() body: RegisterDto) {
     return this.authService.register(body);
   }
 
   @UseGuards(LocalAuthGuard)
   @HttpCode(200)
-  @Post('api/auth/login')
+  @Post('auth/login')
   async login(@Request() req: AppRequest) {
     const token = this.authService.login(req.user, 'basic');
-
     return token;
   }
 
   @UseGuards(BasicAuthGuard)
-  @Get('api/profile')
+  @Get('profile')
   async getProfile(@Request() req: AppRequest) {
     return {
       user: req.user,
