@@ -3,6 +3,7 @@ import { UsersService } from '../users/services/users.service';
 import { User } from '../users/user.entity';
 import { RegisterDto } from './dto/register.dto';
 import { Inject, forwardRef, BadRequestException, Injectable } from '@nestjs/common';
+import * as bcrypt from 'bcryptjs';
 
 
 export interface TokenResponse {
@@ -23,28 +24,34 @@ export class AuthService {
   async register(payload: RegisterDto) {
     try {
       console.log('[DEBUG] Register payload:', payload);
-  
+
+      const hashedPassword = await bcrypt.hash(payload.password, 10);
+
       const user = await this.usersService.findOne(payload.email);
       if (user) {
         throw new BadRequestException('User already exists');
       }
-  
-      const createdUser = await this.usersService.createOne(payload);
+
+      const createdUser = await this.usersService.createOne({
+        ...payload,
+        password: hashedPassword,
+      });
+
       return { userId: createdUser.id };
     } catch (err) {
       console.error('[REGISTER ERROR]', err);
       throw err;
     }
-  }  
-  
+  }
+
   async validateUser(email: string, password: string): Promise<User | null> {
     const user = await this.usersService.findOne(email);
-    if (user && user.password === password) {
+    if (user && await bcrypt.compare(password, user.password)) {
       return user;
     }
     return null;
   }
-
+  
   login(user: User, type: 'jwt' | 'basic' | 'default'): TokenResponse {
     const LOGIN_MAP = {
       jwt: this.loginJWT,
