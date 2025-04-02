@@ -44,7 +44,7 @@ export class AppController {
   @HttpCode(200)
   @Post('auth/login')
   async login(@Request() req: AppRequest): Promise<TokenResponse> {
-    return this.authService.login(req.user, 'basic');
+    return this.authService.login(req.user);
   }
 
   @UseGuards(BasicAuthGuard)

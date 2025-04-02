@@ -52,15 +52,13 @@ export class AuthService {
     return null;
   }
   
-  login(user: User, type: 'jwt' | 'basic' | 'default'): TokenResponse {
-    const LOGIN_MAP = {
-      jwt: this.loginJWT,
-      basic: this.loginBasic,
-      default: this.loginJWT,
+  login(user: User): TokenResponse {
+    const payload = { username: user.email, sub: user.id };
+    return {
+      token_type: 'Bearer',
+      access_token: this.jwtService.sign(payload),
     };
-    const login = LOGIN_MAP[type];
-    return login ? login(user) : LOGIN_MAP.default(user);
-  }
+  }  
 
   loginJWT(user: User): TokenResponse {
     const payload = { username: user.email, sub: user.id };
