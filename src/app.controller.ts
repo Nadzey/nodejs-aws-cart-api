@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Body,
   HttpCode,
+  Inject,
 } from '@nestjs/common';
 import { AuthService } from './auth/auth.service';
 import { LocalAuthGuard } from './auth/guards/local-auth.guard';
@@ -14,12 +15,16 @@ import { BasicAuthGuard } from './auth/guards/bacis-auth.guard';
 import { RegisterDto } from './auth/dto/register.dto';
 import { TokenResponse } from './auth/auth.service';
 import { AppRequest } from './shared';
+import { forwardRef} from '@nestjs/common';
 
 @Controller()
 export class AppController {
-  constructor(private readonly authService: AuthService) {
+  constructor(
+    @Inject(forwardRef(() => AuthService))
+    private readonly authService: AuthService,
+  ) {
     console.log('[DEBUG] AppController injected AuthService:', !!authService);
-  }
+  }  
 
   @Get(['', 'ping'])
   healthCheck() {
