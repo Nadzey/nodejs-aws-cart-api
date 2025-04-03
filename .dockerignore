@@ -1,0 +1,21 @@
+# Node modules — already installed inside the image
+node_modules
+
+# Build output — built inside container
+dist
+
+# Git version control — not needed in Docker image
+.git
+
+# Elastic Beanstalk settings — only for local
+.elasticbeanstalk
+
+# Docker configs — no need to copy Dockerfile itself
+Dockerfile
+.dockerignore
+
+# IDE settings
+.vscode
+
+# Logs
+*.log
