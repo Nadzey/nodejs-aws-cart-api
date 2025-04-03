@@ -32,3 +32,33 @@ export const handler: Handler = async (
   const server = await bootstrap();
   return server(event, context, callback);
 };
+
+if (require.main === module) {
+  console.log('[DEBUG] Running lambda handler locally');
+
+  const mockEvent = {
+    version: '2.0',
+    routeKey: 'GET /ping',
+    rawPath: '/ping',
+    rawQueryString: '',
+    headers: {
+      host: 'localhost',
+      'Content-Type': 'application/json',
+    },
+    requestContext: {
+      http: {
+        method: 'GET',
+        path: '/ping',
+      },
+    },
+    isBase64Encoded: false,
+  };
+
+  handler(mockEvent, {} as any, (error, response) => {
+    if (error) {
+      console.error('[LAMBDA ERROR]', error);
+    } else {
+      console.log('[LAMBDA RESPONSE]', response);
+    }
+  });
+}

@@ -1,38 +1,54 @@
+-- Drop all existing structures
 DROP TABLE IF EXISTS orders CASCADE;
 DROP TABLE IF EXISTS cart_items CASCADE;
 DROP TABLE IF EXISTS carts CASCADE;
+DROP TABLE IF EXISTS products CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TYPE IF EXISTS order_status CASCADE;
 DROP TYPE IF EXISTS cart_status CASCADE;
 
+-- Define ENUMs
 CREATE TYPE order_status AS ENUM ('CREATED', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED');
 CREATE TYPE cart_status AS ENUM ('OPEN', 'ORDERED');
 
+-- Users table
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_DATE,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_DATE
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
 );
 
+-- Products table
+CREATE TABLE products (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    price DECIMAL(10,2) NOT NULL CHECK (price >= 0)
+);
+
+-- Carts table
 CREATE TABLE carts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_DATE,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_DATE,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
     status cart_status NOT NULL DEFAULT 'OPEN',
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+-- Cart Items
 CREATE TABLE cart_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     cart_id UUID NOT NULL,
     product_id UUID NOT NULL,
     count INTEGER NOT NULL CHECK (count > 0),
-    PRIMARY KEY (cart_id, product_id),
-    FOREIGN KEY (cart_id) REFERENCES carts(id)
+    FOREIGN KEY (cart_id) REFERENCES carts(id),
+    FOREIGN KEY (product_id) REFERENCES products(id)
 );
 
+-- Orders
 CREATE TABLE orders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
@@ -42,80 +58,42 @@ CREATE TABLE orders (
     comments TEXT,
     status order_status NOT NULL DEFAULT 'CREATED',
     total DECIMAL(10,2) NOT NULL CHECK (total >= 0),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_DATE,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_DATE,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (cart_id) REFERENCES carts(id)
 );
 
--- Insert test data
-INSERT INTO users (id, email, password) VALUES
-(
-    'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-    'user1@example.com',
-    'hashed_password_1'
-),
-(
-    'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
-    'user2@example.com',
-    'hashed_password_2'
-),
-(
-    'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33',
-    'user3@example.com',
-    'hashed_password_3'
-);
+-- Insert users
+-- Insert users
+INSERT INTO users (id, email, password, created_at, updated_at) VALUES
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'user1@example.com', 'hashed_password_1', '2025-03-01', '2025-03-01'),
+('b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', 'user2@example.com', 'hashed_password_2', '2025-03-02', '2025-03-02'),
+('c0eebc99-9c0b-4ef8-bb6d-6bb9bd380a33', 'user3@example.com', 'hashed_password_3', '2025-03-03', '2025-03-03'),
+('90f2482e-628f-4598-b866-4e458ae826e4', 'Nadzey', '$2b$10$7V3yaVuFUuezA7pxMk758O5gZPJmV4BVfy/7Av9jBMgOGCd8xmeOO', '2025-04-01', '2025-04-01');
 
+
+-- Insert products
+INSERT INTO products (id, title, description, price) VALUES
+('10eebc99-9c0b-4ef8-bb6d-6bb9bd380a77', 'Product A', 'Description for A', 25.00),
+('20eebc99-9c0b-4ef8-bb6d-6bb9bd380a88', 'Product B', 'Description for B', 50.00),
+('30eebc99-9c0b-4ef8-bb6d-6bb9bd380a99', 'Product C', 'Description for C', 75.00);
+
+-- Insert carts
 INSERT INTO carts (id, user_id, created_at, updated_at, status) VALUES
-(
-    'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
-    'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-    CURRENT_DATE,
-    CURRENT_DATE,
-    'OPEN'
-),
-(
-    'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55',
-    'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-    CURRENT_DATE - 2,
-    CURRENT_DATE - 1,
-    'ORDERED'
-),
-(
-    'f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66',
-    'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
-    CURRENT_DATE - 5,
-    CURRENT_DATE - 5,
-    'ORDERED'
-);
+('d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', '2025-03-04', '2025-03-04', 'OPEN'),
+('e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55', 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', '2025-03-01', '2025-03-02', 'ORDERED'),
+('f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22', '2025-02-27', '2025-02-27', 'ORDERED');
 
+-- Insert cart items
 INSERT INTO cart_items (cart_id, product_id, count) VALUES
-(
-    'd0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44',
-    '10eebc99-9c0b-4ef8-bb6d-6bb9bd380a77',
-    2
-),
-(
-    'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55',
-    '20eebc99-9c0b-4ef8-bb6d-6bb9bd380a88',
-    3
-),
-(
-    'f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66',
-    '30eebc99-9c0b-4ef8-bb6d-6bb9bd380a99',
-    5
-);
+('d0eebc99-9c0b-4ef8-bb6d-6bb9bd380a44', '10eebc99-9c0b-4ef8-bb6d-6bb9bd380a77', 2),
+('e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55', '20eebc99-9c0b-4ef8-bb6d-6bb9bd380a88', 3),
+('f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66', '30eebc99-9c0b-4ef8-bb6d-6bb9bd380a99', 5);
 
--- Insert orders for the ORDERED carts
+-- Insert orders
 INSERT INTO orders (
-    id,
-    user_id,
-    cart_id,
-    payment,
-    delivery,
-    comments,
-    status,
-    total
+    id, user_id, cart_id, payment, delivery, comments, status, total, created_at, updated_at
 ) VALUES
 (
     '40eebc99-9c0b-4ef8-bb6d-6bb9bd380aa1',
@@ -125,7 +103,9 @@ INSERT INTO orders (
     '{"address": "123 Main St", "city": "Boston", "zip": "02101"}'::jsonb,
     'Please deliver in the morning',
     'PAID',
-    150.00
+    150.00,
+    '2025-03-03',
+    '2025-03-04'
 ),
 (
     '50eebc99-9c0b-4ef8-bb6d-6bb9bd380aa2',
@@ -135,7 +115,9 @@ INSERT INTO orders (
     '{"address": "456 Oak St", "city": "New York", "zip": "10001"}'::jsonb,
     NULL,
     'SHIPPED',
-    299.99
+    299.99,
+    '2025-02-28',
+    '2025-03-01'
 );
 
 -- Verify the data

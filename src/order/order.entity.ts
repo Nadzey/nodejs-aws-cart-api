@@ -4,11 +4,9 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { User } from '../users/user.entity';
 import { Cart } from '../cart/cart.entity';
 
 export enum OrderStatus {
@@ -34,7 +32,7 @@ interface DeliveryData {
 
 @Entity('orders')
 export class Order {
-  @PrimaryGeneratedColumn('uuid', { name: 'id' })
+  @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ name: 'user_id', type: 'uuid' })
@@ -72,16 +70,10 @@ export class Order {
   })
   total: number;
 
-  @CreateDateColumn({
-    name: 'created_at',
-    type: 'timestamp',
-  })
+  @CreateDateColumn()
   createdAt: Date;
 
-  @UpdateDateColumn({
-    name: 'updated_at',
-    type: 'timestamp',
-  })
+  @UpdateDateColumn()
   updatedAt: Date;
 
   @ManyToOne(() => Cart)

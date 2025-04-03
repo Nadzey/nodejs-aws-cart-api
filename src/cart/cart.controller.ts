@@ -11,19 +11,25 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { BasicAuthGuard } from '../auth';
-import { Order, OrderService } from '../order';
+import { OrderService } from '../order/services/order.service';
+import { Order} from '../order/order.entity';
 import { AppRequest, getUserIdFromRequest } from '../shared';
 import { calculateCartTotal } from './models-rules';
-import { CartService } from './services';
-import { CartItem } from './models';
+import { CartService } from './services/cart.service';
+import { CartItem } from './cart-item.entity';
 import { CreateOrderDto, PutCartPayload } from 'src/order/type';
+import { Inject, forwardRef } from '@nestjs/common';
 
 @Controller('profile/cart')
 export class CartController {
   constructor(
-    private cartService: CartService,
-    private orderService: OrderService,
-  ) {}
+    @Inject(forwardRef(() => CartService))
+    private readonly cartService: CartService,
+    private readonly orderService: OrderService,
+  ) {
+    console.log('[DEBUG] CartService injected:', !!cartService);
+  }
+  
 
   @UseGuards(BasicAuthGuard)
   @Get()
@@ -85,7 +91,6 @@ export class CartController {
   @Get('order')
   async getOrder(@Req() req: AppRequest): Promise<Order[]> {
     const userId = getUserIdFromRequest(req);
-    const orders = await this.orderService.getAll();
-    return orders;
+    return this.orderService.getAll();
   }
 }

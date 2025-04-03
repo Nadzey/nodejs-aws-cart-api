@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AuthModule } from './auth/auth.module';
@@ -10,7 +10,6 @@ import { CartItem } from './cart/cart-item.entity';
 import { Product } from './products/product.entity';
 import { UsersModule } from './users/users.module';
 import { User } from './users/user.entity';
-
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -30,8 +29,8 @@ import { User } from './users/user.entity';
     }),
     AuthModule,
     UsersModule,
-    CartModule,
-    OrderModule,
+    forwardRef(() => CartModule),
+    forwardRef(() => OrderModule),
   ],
   controllers: [AppController],
 })
