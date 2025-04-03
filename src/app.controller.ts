@@ -7,19 +7,24 @@ import {
   HttpStatus,
   Body,
   HttpCode,
+  Inject,
 } from '@nestjs/common';
-import {
-  LocalAuthGuard,
-  AuthService,
-  // JwtAuthGuard,
-  BasicAuthGuard,
-} from './auth';
-import { User } from './users';
+import { AuthService } from './auth/auth.service';
+import { LocalAuthGuard } from './auth/guards/local-auth.guard';
+import { BasicAuthGuard } from './auth/guards/bacis-auth.guard';
+import { RegisterDto } from './auth/dto/register.dto';
+import { TokenResponse } from './auth/auth.service';
 import { AppRequest } from './shared';
+import { forwardRef} from '@nestjs/common';
 
 @Controller()
 export class AppController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    @Inject(forwardRef(() => AuthService))
+    private readonly authService: AuthService,
+  ) {
+    console.log('[DEBUG] AppController injected AuthService:', !!authService);
+  }  
 
   @Get(['', 'ping'])
   healthCheck() {
@@ -29,24 +34,21 @@ export class AppController {
     };
   }
 
-  @Post('api/auth/register')
+  @Post('auth/register')
   @HttpCode(HttpStatus.CREATED)
-  // TODO ADD validation
-  register(@Body() body: User) {
+  register(@Body() body: RegisterDto) {
     return this.authService.register(body);
   }
 
   @UseGuards(LocalAuthGuard)
   @HttpCode(200)
-  @Post('api/auth/login')
-  async login(@Request() req: AppRequest) {
-    const token = this.authService.login(req.user, 'basic');
-
-    return token;
+  @Post('auth/login')
+  async login(@Request() req: AppRequest): Promise<TokenResponse> {
+    return this.authService.login(req.user);
   }
 
   @UseGuards(BasicAuthGuard)
-  @Get('api/profile')
+  @Get('profile')
   async getProfile(@Request() req: AppRequest) {
     return {
       user: req.user,

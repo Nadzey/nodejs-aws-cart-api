@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 import { AppModule } from './../src/app.module';
-import { UsersService } from './../src/users';
+import { UsersService } from './../src/users/services/users.service';
 
 const fakeUser = {
   name: 'test',
@@ -36,13 +36,13 @@ describe('AppController (e2e)', () => {
   });
 
   it('/api/auth/register POST should return statusCode 201', () => {
-    return request(app.getHttpServer()).post('/api/auth/register')
+    return request(app.getHttpServer()).post('/auth/register')
     .send(fakeUser)
     .expect(201);
   });
 
   it('/api/auth/login POST should return statusCode 404 if user does not exists', () => {
-    return request(app.getHttpServer()).post('/api/auth/login')
+    return request(app.getHttpServer()).post('/auth/login')
     .send(fakeUser)
     .expect(401);
   });
