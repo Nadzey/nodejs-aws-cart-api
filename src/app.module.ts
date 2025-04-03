@@ -10,6 +10,8 @@ import { CartItem } from './cart/cart-item.entity';
 import { Product } from './products/product.entity';
 import { UsersModule } from './users/users.module';
 import { User } from './users/user.entity';
+import { Order } from './order/order.entity';
+
 @Module({
   imports: [
     ConfigModule.forRoot(),
@@ -20,7 +22,7 @@ import { User } from './users/user.entity';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      entities: [Cart, CartItem, Product, User],
+      entities: [Cart, CartItem, Product, User, Order],
       synchronize: false,
       logging: true,
       ssl: {

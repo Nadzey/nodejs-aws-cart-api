@@ -53,18 +53,18 @@ CREATE TABLE orders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL,
     cart_id UUID NOT NULL,
+    items JSONB NOT NULL,
     payment JSONB NOT NULL,
     delivery JSONB NOT NULL,
     comments TEXT,
     status order_status NOT NULL DEFAULT 'CREATED',
     total DECIMAL(10,2) NOT NULL CHECK (total >= 0),
-    created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (cart_id) REFERENCES carts(id)
+    FOREIGN KEY (cart_id) REFERENCES carts(id) ON DELETE CASCADE
 );
 
--- Insert users
 -- Insert users
 INSERT INTO users (id, email, password, created_at, updated_at) VALUES
 ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'user1@example.com', 'hashed_password_1', '2025-03-01', '2025-03-01'),
@@ -93,12 +93,13 @@ INSERT INTO cart_items (cart_id, product_id, count) VALUES
 
 -- Insert orders
 INSERT INTO orders (
-    id, user_id, cart_id, payment, delivery, comments, status, total, created_at, updated_at
+    id, user_id, cart_id, items, payment, delivery, comments, status, total, created_at, updated_at
 ) VALUES
 (
     '40eebc99-9c0b-4ef8-bb6d-6bb9bd380aa1',
     'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
     'e0eebc99-9c0b-4ef8-bb6d-6bb9bd380a55',
+    '[{"productId": "20eebc99-9c0b-4ef8-bb6d-6bb9bd380a88", "count": 3}]'::jsonb,
     '{"method": "credit_card", "card_last4": "4242", "amount": 150.00}'::jsonb,
     '{"address": "123 Main St", "city": "Boston", "zip": "02101"}'::jsonb,
     'Please deliver in the morning',
@@ -111,6 +112,7 @@ INSERT INTO orders (
     '50eebc99-9c0b-4ef8-bb6d-6bb9bd380aa2',
     'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a22',
     'f0eebc99-9c0b-4ef8-bb6d-6bb9bd380a66',
+    '[{"productId": "30eebc99-9c0b-4ef8-bb6d-6bb9bd380a99", "count": 5}]'::jsonb,
     '{"method": "paypal", "email": "user2@example.com", "amount": 299.99}'::jsonb,
     '{"address": "456 Oak St", "city": "New York", "zip": "10001"}'::jsonb,
     NULL,

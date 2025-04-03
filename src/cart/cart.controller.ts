@@ -9,27 +9,28 @@ import {
   HttpStatus,
   HttpCode,
   BadRequestException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { BasicAuthGuard } from '../auth';
 import { OrderService } from '../order/services/order.service';
-import { Order} from '../order/order.entity';
+import { Order } from '../order/order.entity';
 import { AppRequest, getUserIdFromRequest } from '../shared';
 import { calculateCartTotal } from './models-rules';
 import { CartService } from './services/cart.service';
 import { CartItem } from './cart-item.entity';
 import { CreateOrderDto, PutCartPayload } from 'src/order/type';
-import { Inject, forwardRef } from '@nestjs/common';
 
 @Controller('profile/cart')
 export class CartController {
   constructor(
     @Inject(forwardRef(() => CartService))
     private readonly cartService: CartService,
+    @Inject(forwardRef(() => OrderService))
     private readonly orderService: OrderService,
   ) {
     console.log('[DEBUG] CartService injected:', !!cartService);
   }
-  
 
   @UseGuards(BasicAuthGuard)
   @Get()
@@ -74,11 +75,21 @@ export class CartController {
     const order = await this.orderService.create({
       userId,
       cartId,
+      address: body.address,
       items: items.map(({ product, count }) => ({
         productId: product.id,
         count,
       })),
-      address: body.address,
+      payment: {
+        method: 'mock',
+        amount: total,
+      },
+      delivery: {
+        address: body.address.address,
+        city: 'Philadelphia',
+        zip: '19100',
+      },
+      comments: body.address.comment || 'Auto-generated order',
       total,
     });
 

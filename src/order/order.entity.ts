@@ -1,12 +1,13 @@
-import 'reflect-metadata';
 import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
+  JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { User } from '../users/user.entity';
 import { Cart } from '../cart/cart.entity';
 
 export enum OrderStatus {
@@ -30,6 +31,11 @@ interface DeliveryData {
   zip: string;
 }
 
+interface OrderItem {
+  productId: string;
+  count: number;
+}
+
 @Entity('orders')
 export class Order {
   @PrimaryGeneratedColumn('uuid')
@@ -42,7 +48,7 @@ export class Order {
   cartId: string;
 
   @Column('jsonb')
-  items: Array<{ productId: string; count: number }>;
+  items: OrderItem[];
 
   @Column('jsonb')
   payment: PaymentData;
@@ -70,12 +76,17 @@ export class Order {
   })
   total: number;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ name: 'created_at', type: 'timestamp' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamp' })
   updatedAt: Date;
 
   @ManyToOne(() => Cart)
+  @JoinColumn({ name: 'cart_id' })
   cart: Cart;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 }

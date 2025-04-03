@@ -15,7 +15,11 @@ export class CartService {
     private cartItemRepository: Repository<CartItem>,
     @InjectRepository(Product)
     private productRepository: Repository<Product>,
-  ) {}
+  ) {
+    console.log('[DEBUG] CartRepository:', !!cartRepository);
+    console.log('[DEBUG] CartItemRepository:', !!cartItemRepository);
+    console.log('[DEBUG] ProductRepository:', !!productRepository);
+  }
 
   async findByUserId(userId: string): Promise<Cart> {
     return this.cartRepository.findOne({
@@ -79,7 +83,7 @@ export class CartService {
     const userCart = await this.findByUserId(userId);
     if (userCart) {
       await this.cartItemRepository.remove(userCart.items);
-      await this.cartRepository.remove(userCart);
+      await this.cartRepository.remove(userCart);    
     }
   }
 }
