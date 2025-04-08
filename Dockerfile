@@ -1,23 +1,25 @@
-# Use official Node.js 20 Alpine base image
-FROM node:20-alpine
+FROM node:18-alpine
 
-# Set working directory inside the container
+# Install build dependencies
+RUN apk add --no-cache python3 make g++
+
 WORKDIR /app
 
-# Copy dependency definitions
+# Copy package files
 COPY package*.json ./
 
-# Install dependencies
+# Install all dependencies (including dev dependencies for build)
 RUN npm install
 
-# Copy the rest of the application code
+# Copy source code
 COPY . .
 
-# Build the project (for TypeScript projects)
+# Build the application
 RUN npm run build
 
-# Expose the port the app runs on
+# Remove dev dependencies
+RUN npm prune --production
+
 EXPOSE 3000
 
-# Run the application
-CMD ["node", "dist/src/lambda.js"]
+CMD ["node", "dist/lambda.js"]

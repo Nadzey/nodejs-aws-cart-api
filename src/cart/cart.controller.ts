@@ -19,7 +19,7 @@ import { AppRequest, getUserIdFromRequest } from '../shared';
 import { calculateCartTotal } from './models-rules';
 import { CartService } from './services/cart.service';
 import { CartItem } from './cart-item.entity';
-import { CreateOrderDto, PutCartPayload } from 'src/order/type';
+import { CreateOrderDto, PutCartPayload } from '../order/type';
 
 @Controller('profile/cart')
 export class CartController {

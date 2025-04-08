@@ -16,6 +16,7 @@ import { RegisterDto } from './auth/dto/register.dto';
 import { TokenResponse } from './auth/auth.service';
 import { AppRequest } from './shared';
 import { forwardRef} from '@nestjs/common';
+import { UnauthorizedException } from '@nestjs/common';
 
 @Controller()
 export class AppController {
@@ -44,7 +45,9 @@ export class AppController {
   @HttpCode(200)
   @Post('auth/login')
   async login(@Request() req: AppRequest): Promise<TokenResponse> {
-    return this.authService.login(req.user);
+    if (!req.user) throw new UnauthorizedException();
+return this.authService.login(req.user);
+
   }
 
   @UseGuards(BasicAuthGuard)
