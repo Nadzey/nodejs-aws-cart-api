@@ -1,7 +1,7 @@
 import { Handler, Context, Callback } from 'aws-lambda';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { configure as serverlessExpress } from '@vendia/serverless-express';
+// import { configure as serverlessExpress } from '@vendia/serverless-express';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
 import 'reflect-metadata';
@@ -19,7 +19,7 @@ async function bootstrap(): Promise<Handler> {
     nestApp.enableCors();
     await nestApp.init();
 
-    cachedServer = serverlessExpress({ app: expressApp });
+    // cachedServer = serverlessExpress({ app: expressApp });
   }
   return cachedServer;
 }
