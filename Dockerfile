@@ -20,6 +20,6 @@ RUN npm run build
 # Remove dev dependencies
 RUN npm prune --production
 
-EXPOSE 3000
+EXPOSE 8080
 
 CMD ["node", "dist/main.js"]
