@@ -22,4 +22,4 @@ RUN npm prune --production
 
 EXPOSE 3000
 
-CMD ["node", "dist/lambda.js"]
+CMD ["node", "dist/main.js"]
