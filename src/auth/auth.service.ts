@@ -1,75 +1,79 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/services/users.service';
-import { User } from '../users/models';
-// import { contentSecurityPolicy } from 'helmet';
-type TokenResponse = {
+import { User } from '../users/user.entity';
+import { RegisterDto } from './dto/register.dto';
+import { Inject, forwardRef, BadRequestException, Injectable } from '@nestjs/common';
+import * as bcrypt from 'bcryptjs';
+
+
+export interface TokenResponse {
   token_type: string;
   access_token: string;
-};
+}
 
 @Injectable()
 export class AuthService {
   constructor(
+    @Inject(forwardRef(() => UsersService))
     private usersService: UsersService,
     private jwtService: JwtService,
-  ) {}
-
-  register(payload: User) {
-    const user = this.usersService.findOne(payload.name);
-
-    if (user) {
-      throw new BadRequestException('User with such name already exists');
-    }
-
-    const { id: userId } = this.usersService.createOne(payload);
-    return { userId };
+  ) {
+    console.log('[DEBUG] AuthService created. UsersService:', !!usersService);
   }
 
-  validateUser(name: string, password: string): User {
-    const user = this.usersService.findOne(name);
+  async register(payload: RegisterDto) {
+    try {
+      console.log('[DEBUG] Register payload:', payload);
 
-    if (user) {
+      const hashedPassword = await bcrypt.hash(payload.password, 10);
+
+      const user = await this.usersService.findOne(payload.email);
+      if (user) {
+        throw new BadRequestException('User already exists');
+      }
+
+      const createdUser = await this.usersService.createOne({
+        ...payload,
+        password: hashedPassword,
+      });
+
+      return { userId: createdUser.id };
+    } catch (err) {
+      console.error('[REGISTER ERROR]', err);
+      throw err;
+    }
+  }
+
+  async validateUser(email: string, password: string): Promise<User | null> {
+    const user = await this.usersService.findOne(email);
+    if (user && await bcrypt.compare(password, user.password)) {
       return user;
     }
-
-    return this.usersService.createOne({ name, password });
+    return null;
   }
-
-  login(user: User, type: 'jwt' | 'basic' | 'default'): TokenResponse {
-    const LOGIN_MAP = {
-      jwt: this.loginJWT,
-      basic: this.loginBasic,
-      default: this.loginJWT,
+  
+  login(user: User): TokenResponse {
+    const payload = { username: user.email, sub: user.id };
+    return {
+      token_type: 'Bearer',
+      access_token: this.jwtService.sign(payload),
     };
-    const login = LOGIN_MAP[type];
+  }  
 
-    return login ? login(user) : LOGIN_MAP.default(user);
-  }
-
-  loginJWT(user: User) {
-    const payload = { username: user.name, sub: user.id };
-
+  loginJWT(user: User): TokenResponse {
+    const payload = { username: user.email, sub: user.id };
     return {
       token_type: 'Bearer',
       access_token: this.jwtService.sign(payload),
     };
   }
 
-  loginBasic(user: User) {
-    // const payload = { username: user.name, sub: user.id };
-    console.log(user);
-
-    function encodeUserToken(user: User) {
-      const { name, password } = user;
-      const buf = Buffer.from([name, password].join(':'), 'utf8');
-
-      return buf.toString('base64');
-    }
-
+  loginBasic(user: User): TokenResponse {
+    const { email, password } = user;
+    const buf = Buffer.from([email, password].join(':'), 'utf8');
     return {
       token_type: 'Basic',
-      access_token: encodeUserToken(user),
+      access_token: buf.toString('base64'),
     };
   }
 }

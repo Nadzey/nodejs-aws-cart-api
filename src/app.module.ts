@@ -1,15 +1,39 @@
-import { Module } from '@nestjs/common';
-
+import { forwardRef, Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
-
-import { CartModule } from './cart/cart.module';
 import { AuthModule } from './auth/auth.module';
+import { CartModule } from './cart/cart.module';
 import { OrderModule } from './order/order.module';
 import { ConfigModule } from '@nestjs/config';
+import { Cart } from './cart/cart.entity';
+import { CartItem } from './cart/cart-item.entity';
+import { Product } from './products/product.entity';
+import { UsersModule } from './users/users.module';
+import { User } from './users/user.entity';
+import { Order } from './order/order.entity';
 
 @Module({
-  imports: [AuthModule, CartModule, OrderModule, ConfigModule.forRoot()],
+  imports: [
+    ConfigModule.forRoot(),
+    TypeOrmModule.forRoot({
+      type: 'postgres',
+      host: process.env.DB_HOST,
+      port: 5432,
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      entities: [Cart, CartItem, Product, User, Order],
+      synchronize: false,
+      logging: true,
+      ssl: {
+        rejectUnauthorized: false,
+      },
+    }),
+    AuthModule,
+    UsersModule,
+    forwardRef(() => CartModule),
+    forwardRef(() => OrderModule),
+  ],
   controllers: [AppController],
-  providers: [],
 })
 export class AppModule {}

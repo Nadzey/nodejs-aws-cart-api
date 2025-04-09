@@ -15,9 +15,9 @@ LOGIN_PAYLOAD="{\"username\":\"$AUTH_USERNAME\",\"password\":\"$AUTH_PASSWORD\"}
 
 curl -s --header "Content-Type: application/json" \
   --request POST \
-  --data "$REGISTER_PAYLOAD"  "$APP_URL/api/auth/register" > /dev/null
+  --data "$REGISTER_PAYLOAD"  "$APP_URL/auth/register" > /dev/null
 
 
 curl -s --header "Content-Type: application/json" \
   --request POST \
-  --data "$LOGIN_PAYLOAD" "$APP_URL/api/auth/login"
+  --data "$LOGIN_PAYLOAD" "$APP_URL/auth/login"

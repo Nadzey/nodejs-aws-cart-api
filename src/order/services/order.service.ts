@@ -1,50 +1,40 @@
 import { Injectable } from '@nestjs/common';
-import { randomUUID } from 'node:crypto';
-import { Order } from '../models';
-import { CreateOrderPayload, OrderStatus } from '../type';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Order, OrderStatus } from '../order.entity';
+import { CreateOrderPayload } from '../type';
 
 @Injectable()
 export class OrderService {
-  private orders: Record<string, Order> = {};
+  constructor(
+    @InjectRepository(Order)
+    private readonly orderRepository: Repository<Order>,
+  ) {}
 
-  getAll() {
-    return Object.values(this.orders);
+  async getAll(): Promise<Order[]> {
+    return await this.orderRepository.find({ order: { createdAt: 'DESC' } });
   }
 
-  findById(orderId: string): Order {
-    return this.orders[orderId];
+  async findById(orderId: string): Promise<Order | null> {
+    return await this.orderRepository.findOne({ where: { id: orderId } });
   }
 
-  create(data: CreateOrderPayload) {
-    const id = randomUUID() as string;
-    const order: Order = {
-      id,
+  async create(data: CreateOrderPayload): Promise<Order> {
+    const newOrder = this.orderRepository.create({
       ...data,
-      statusHistory: [
-        {
-          comment: '',
-          status: OrderStatus.Open,
-          timestamp: Date.now(),
-        },
-      ],
-    };
+      status: OrderStatus.CREATED,
+    });
 
-    this.orders[id] = order;
-
-    return order;
+    return await this.orderRepository.save(newOrder);
   }
 
-  // TODO add  type
-  update(orderId: string, data: Order) {
-    const order = this.findById(orderId);
-
+  async update(orderId: string, updatedData: Partial<Order>): Promise<Order> {
+    const order = await this.findById(orderId);
     if (!order) {
       throw new Error('Order does not exist.');
     }
 
-    this.orders[orderId] = {
-      ...data,
-      id: orderId,
-    };
+    const updatedOrder = this.orderRepository.merge(order, updatedData);
+    return await this.orderRepository.save(updatedOrder);
   }
 }
